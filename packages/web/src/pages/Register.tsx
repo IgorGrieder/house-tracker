@@ -1,3 +1,4 @@
+import type { AxiosError } from "axios";
 import { type FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../store/auth";
@@ -25,7 +26,8 @@ export function RegisterPage() {
 				...(mode === "create" ? { householdName } : { inviteCode }),
 			});
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Registration failed");
+			const e = err as AxiosError<{ error?: string }>;
+			setError(e.response?.data?.error || e.message || "Registration failed");
 		} finally {
 			setLoading(false);
 		}

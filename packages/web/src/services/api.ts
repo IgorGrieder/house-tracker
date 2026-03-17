@@ -1,4 +1,9 @@
-const BASE_URL = "/api";
+import axios from "axios";
+
+const api = axios.create({
+	baseURL: "/api",
+	headers: { "Content-Type": "application/json" },
+});
 
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
@@ -19,59 +24,34 @@ export function clearTokens() {
 	localStorage.removeItem("refreshToken");
 }
 
-async function silentRefresh(): Promise<boolean> {
-	if (!refreshToken) return false;
-
-	try {
-		const res = await fetch(`${BASE_URL}/auth/refresh`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ refreshToken }),
-		});
-
-		if (!res.ok) {
-			clearTokens();
-			return false;
-		}
-
-		const data = await res.json();
-		setTokens(data.accessToken, data.refreshToken);
-		return true;
-	} catch {
-		clearTokens();
-		return false;
-	}
-}
-
-export async function apiFetch<T = unknown>(
-	path: string,
-	options: RequestInit = {},
-): Promise<T> {
-	const headers: Record<string, string> = {
-		"Content-Type": "application/json",
-		...(options.headers as Record<string, string>),
-	};
-
+// Attach access token to every request
+api.interceptors.request.use((config) => {
 	if (accessToken) {
-		headers.Authorization = `Bearer ${accessToken}`;
+		config.headers.Authorization = `Bearer ${accessToken}`;
 	}
+	return config;
+});
 
-	let res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
-
-	// If 401, attempt silent refresh and retry once
-	if (res.status === 401 && refreshToken) {
-		const refreshed = await silentRefresh();
-		if (refreshed) {
-			headers.Authorization = `Bearer ${accessToken}`;
-			res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+// On 401, attempt silent refresh and retry once
+api.interceptors.response.use(
+	(res) => res,
+	async (error) => {
+		const original = error.config;
+		if (error.response?.status === 401 && refreshToken && !original._retry) {
+			original._retry = true;
+			try {
+				const { data } = await axios.post("/api/auth/refresh", {
+					refreshToken,
+				});
+				setTokens(data.accessToken, data.refreshToken);
+				original.headers.Authorization = `Bearer ${accessToken}`;
+				return api(original);
+			} catch {
+				clearTokens();
+			}
 		}
-	}
+		return Promise.reject(error);
+	},
+);
 
-	if (!res.ok) {
-		const body = await res.json().catch(() => ({}));
-		throw new Error(body.error || `Request failed: ${res.status}`);
-	}
-
-	if (res.status === 204) return undefined as T;
-	return res.json();
-}
+export default api;

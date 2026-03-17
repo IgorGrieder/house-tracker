@@ -1,5 +1,6 @@
+import type { AxiosError } from "axios";
 import { useCallback, useEffect, useState } from "react";
-import { apiFetch } from "../services/api";
+import api from "../services/api";
 
 export function useApi<T>(path: string | null) {
 	const [data, setData] = useState<T | null>(null);
@@ -10,9 +11,12 @@ export function useApi<T>(path: string | null) {
 		if (!path) return;
 		setLoading(true);
 		setError(null);
-		apiFetch<T>(path)
-			.then(setData)
-			.catch((e: Error) => setError(e.message))
+		api
+			.get<T>(path)
+			.then((res) => setData(res.data))
+			.catch((e: AxiosError<{ error?: string }>) =>
+				setError(e.response?.data?.error || e.message),
+			)
 			.finally(() => setLoading(false));
 	}, [path]);
 
@@ -27,22 +31,18 @@ export async function apiPost<T = unknown>(
 	path: string,
 	body: unknown,
 ): Promise<T> {
-	return apiFetch<T>(path, {
-		method: "POST",
-		body: JSON.stringify(body),
-	});
+	const { data } = await api.post<T>(path, body);
+	return data;
 }
 
 export async function apiPatch<T = unknown>(
 	path: string,
 	body: unknown,
 ): Promise<T> {
-	return apiFetch<T>(path, {
-		method: "PATCH",
-		body: JSON.stringify(body),
-	});
+	const { data } = await api.patch<T>(path, body);
+	return data;
 }
 
 export async function apiDelete(path: string): Promise<void> {
-	return apiFetch(path, { method: "DELETE" });
+	await api.delete(path);
 }

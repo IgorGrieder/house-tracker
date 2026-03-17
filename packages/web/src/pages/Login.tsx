@@ -1,3 +1,4 @@
+import type { AxiosError } from "axios";
 import { type FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../store/auth";
@@ -16,7 +17,8 @@ export function LoginPage() {
 		try {
 			await login(email, password);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Login failed");
+			const e = err as AxiosError<{ error?: string }>;
+			setError(e.response?.data?.error || e.message || "Login failed");
 		} finally {
 			setLoading(false);
 		}
