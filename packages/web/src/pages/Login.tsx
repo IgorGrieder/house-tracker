@@ -1,0 +1,135 @@
+import { type FormEvent, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../store/auth";
+
+export function LoginPage() {
+	const { login } = useAuth();
+	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
+	const [error, setError] = useState("");
+	const [loading, setLoading] = useState(false);
+
+	const handleSubmit = async (e: FormEvent) => {
+		e.preventDefault();
+		setError("");
+		setLoading(true);
+		try {
+			await login(email, password);
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Login failed");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	return (
+		<div className="min-h-screen flex items-center justify-center p-4 bg-bg-deep">
+			{/* Ambient glow */}
+			<div className="fixed top-[-40%] left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-amber-accent/[0.04] blur-[120px] pointer-events-none" />
+
+			<div className="relative w-full max-w-[380px] animate-in">
+				{/* Brand */}
+				<div className="text-center mb-10">
+					<div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-glow border border-amber-accent/20 mb-5">
+						<svg
+							width="26"
+							height="26"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="1.5"
+							className="text-amber-accent"
+						>
+							<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+							<polyline points="9 22 9 12 15 12 15 22" />
+						</svg>
+					</div>
+					<h1 className="font-display text-[28px] leading-tight text-text-primary">
+						House Tracker
+					</h1>
+					<p className="text-sm text-text-tertiary mt-1.5">
+						Sign in to your household
+					</p>
+				</div>
+
+				{/* Form card */}
+				<div className="bg-bg-raised/80 backdrop-blur-sm border border-border-default rounded-2xl p-7 shadow-[0_8px_40px_rgba(0,0,0,0.3)]">
+					{error && (
+						<div className="mb-5 flex items-center gap-2.5 bg-danger/10 border border-danger/20 text-danger text-sm rounded-xl px-4 py-3">
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								className="shrink-0"
+							>
+								<circle cx="12" cy="12" r="10" />
+								<line x1="12" y1="8" x2="12" y2="12" />
+								<line x1="12" y1="16" x2="12.01" y2="16" />
+							</svg>
+							{error}
+						</div>
+					)}
+
+					<form onSubmit={handleSubmit} className="space-y-5">
+						<div>
+							<label
+								htmlFor="login-email"
+								className="block text-sm font-medium text-text-secondary mb-2"
+							>
+								Email
+							</label>
+							<input
+								id="login-email"
+								type="email"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								placeholder="you@example.com"
+								required
+								className="w-full bg-bg-elevated border border-border-default rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-amber-dim focus:ring-1 focus:ring-amber-glow-strong transition-colors"
+							/>
+						</div>
+
+						<div>
+							<label
+								htmlFor="login-password"
+								className="block text-sm font-medium text-text-secondary mb-2"
+							>
+								Password
+							</label>
+							<input
+								id="login-password"
+								type="password"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								placeholder="Enter your password"
+								required
+								className="w-full bg-bg-elevated border border-border-default rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-amber-dim focus:ring-1 focus:ring-amber-glow-strong transition-colors"
+							/>
+						</div>
+
+						<button
+							type="submit"
+							disabled={loading}
+							className="w-full bg-amber-accent text-text-inverse font-semibold py-3 rounded-xl text-sm hover:brightness-110 active:brightness-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_0_24px_rgba(232,168,73,0.2)]"
+						>
+							{loading ? "Signing in..." : "Sign In"}
+						</button>
+					</form>
+				</div>
+
+				<p className="text-center text-sm text-text-tertiary mt-6">
+					Don't have an account?{" "}
+					<Link
+						to="/register"
+						className="text-amber-accent font-medium hover:underline"
+					>
+						Create one
+					</Link>
+				</p>
+			</div>
+		</div>
+	);
+}
