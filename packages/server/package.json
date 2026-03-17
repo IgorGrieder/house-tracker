@@ -1,0 +1,22 @@
+{
+	"name": "server",
+	"version": "1.0.0",
+	"scripts": {
+		"dev": "bun run --watch src/index.ts",
+		"lint": "biome check ."
+	},
+	"dependencies": {
+		"elysia": "^1.2.0",
+		"mongoose": "^8.9.0",
+		"@elysiajs/cors": "^1.2.0",
+		"bcryptjs": "^2.4.3",
+		"jsonwebtoken": "^9.0.2",
+		"shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bcryptjs": "^2.4.6",
+		"@types/bun": "^1.3.10",
+		"@types/jsonwebtoken": "^9.0.7",
+		"typescript": "^5.7.0"
+	}
+}
